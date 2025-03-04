@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/backend.Dockerfile
+    container_name: backend
+    image: hustletech/backend
+    ports:
+      - '127.0.0.1:${appHostPort}:${appPort}'
+    volumes:
+      - ../:/workspace
+      - ~/.ssh:/root/.ssh
+      - ${USERPROFILE}/.ssh:/root/.ssh
+      - ./setup/:/setup/
+    env_file:
+      - .env
+    depends_on:
+      - postgres-database
+      - firebird1-database
+      - firebird2-database
+      - redis-database
+      - dynamo-database
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    command:
+      - /bin/sh
+      - -c
+      - |
+          tail -f /dev/null;
+    networks:
+      - hustletech
+
+  postgres-database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/postgres.Dockerfile
+    container_name: postgres-database
+    image: hustletech/postgres-database
+    ports:
+      - '${postgresHostPort}:${postgresPort}'
+    environment:
+      POSTGRES_USER: ${postgresUser}
+      POSTGRES_PASSWORD: ${postgresPassword}
+      POSTGRES_DB: ${postgresDb}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - hustletech
+
+  firebird1-database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/firebird1.Dockerfile
+    container_name: firebird1-database
+    image: hustletech/firebird1-database
+    ports:
+      - '${firebird1HostPort}:${firebird1Port}'
+    environment:
+      FIREBIRD_USER: ${firebird1User}
+      FIREBIRD_PASSWORD: ${firebird1Password}
+      FIREBIRD_DATABASE: ${firebird1Database}
+    networks:
+      - hustletech
+
+  firebird2-database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/firebird2.Dockerfile
+    container_name: firebird2-database
+    image: hustletech/firebird2-database
+    ports:
+      - '${firebird2HostPort}:${firebird2Port}'
+    environment:
+      FIREBIRD_USER: ${firebird2User}
+      FIREBIRD_PASSWORD: ${firebird2Password}
+      FIREBIRD_DATABASE: ${firebird2Database}
+    networks:
+      - hustletech
+
+  redis-database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/redis.Dockerfile
+    container_name: redis-database
+    image: hustletech/redis-database
+    ports:
+      - '${redisHostPort}:${redisPort}'
+    environment:
+      REDIS_PASSWORD: ${redisPassword}
+    networks:
+      - hustletech
+
+  celery-executor:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/celery.Dockerfile
+    container_name: celery-executor
+    image: hustletech/celery-executor
+    depends_on:
+      - redis-database
+    env_file:
+      - .env
+    command: /bin/sh -c "tail -f /dev/null"
+    networks:
+      - hustletech
+
+  dynamo-database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/docker/localstack.Dockerfile
+    container_name: dynamo-database
+    image: hustletech/dynamo-database
+    ports:
+      - '4566:4566'
+      - '4571:4571'
+    environment:
+      SERVICES: "dynamodb,s3,sqs,sns"
+      DEFAULT_REGION: "us-east-1"
+      DATA_DIR: "/var/lib/localstack"
+    volumes:
+      - ./data/localstack:/var/lib/localstack
+    networks:
+      - hustletech
+
+volumes:
+  postgres-database-data:
+    driver: local
+  redis-database-data:
+    driver: local
+  dynamo-database-data:
+    driver: local
+
+networks:
+  hustletech:
+    driver: bridge

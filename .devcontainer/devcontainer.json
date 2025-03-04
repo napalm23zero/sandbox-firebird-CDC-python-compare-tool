@@ -1,0 +1,22 @@
+{
+	"name": "backend",
+	"dockerComposeFile": "./docker-compose.yml",
+	"service": "backend",
+	"workspaceFolder": "/workspace",
+	"shutdownAction": "stopCompose",
+	"otherPortsAttributes": {
+		"onAutoForward": "ignore"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"esbenp.prettier-vscode",
+				"VisualStudioExptTeam.vscodeintellicode",
+				"mhutchie.git-graph",
+				"GitHub.copilot-chat",
+				"GitHub.copilot",
+				"GitHub.vscode-github-actions",
+			]
+		}
+	}
+}
